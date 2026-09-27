@@ -65,19 +65,19 @@ function pedirIndice(lista) {
     return indice;
 }
 
-// Muestra el catalogo con los datos de cada objeto
+// Muestra el catalogo con forEach
 function listarCatalogo(lista) {
     let mensaje = "Catalogo de productos:\n\n";
 
-    for (const producto of lista) {
+    lista.forEach(producto => {
         mensaje = mensaje + lista.indexOf(producto) + ". " + producto.nombre + " (" + producto.categoria + ") - $" + producto.precioM2 + " por m2\n";
-        console.log(producto);
-    }
+    });
 
     alert(mensaje);
+    console.log(lista);
 }
 
-// Muestra lo que lleva cotizado el cliente
+// Muestra la cotizacion y calcula el total con reduce
 function listarCotizacion(lista) {
 
     if (lista.length == 0) {
@@ -87,14 +87,17 @@ function listarCotizacion(lista) {
 
     let mensaje = "Mi cotizacion:\n\n";
 
-    for (const item of lista) {
-        mensaje = mensaje + "- " + item + "\n";
-    }
+    lista.forEach(item => {
+        mensaje = mensaje + item.nombre + " de " + item.metros + " m2 - $" + item.valor + "\n";
+    });
 
-    mensaje = mensaje + "\nTotal: " + lista.length + " productos";
+    const total = lista.reduce((contador, item) => contador + item.valor, 0);
+
+    mensaje = mensaje + "\nTotal: $" + total;
 
     alert(mensaje);
-    console.log(mensaje);
+    console.log(lista);
+    console.log("Total de la cotizacion: $" + total);
 }
 
 // El cliente decide si agrega el producto cotizado
@@ -102,7 +105,7 @@ function agregarACotizacion(producto, metros, valor) {
     const respuesta = prompt("Desea agregar el " + producto.nombre + " a su cotizacion? si/no").toLowerCase();
 
     if (respuesta == "si") {
-        cotizacionCliente.push(producto.nombre + " de " + metros + " m2 - $" + valor);
+        cotizacionCliente.push({ nombre: producto.nombre, metros: metros, valor: valor });
         alert("Listo, ya tiene " + cotizacionCliente.length + " productos en su cotizacion");
     } else {
         alert("No se agrego el " + producto.nombre);
@@ -127,25 +130,81 @@ function quitarUltimo() {
         alert("Su cotizacion esta vacia");
     } else {
         const eliminado = cotizacionCliente.pop();
-        alert("Se ha eliminado el elemento: " + eliminado);
+        alert("Se ha eliminado el elemento: " + eliminado.nombre);
     }
 }
 
-// Busca un producto en el catalogo
+// Busca un producto con find
 function buscarProducto(lista) {
     const buscado = prompt("Que producto quiere buscar?").toLowerCase();
-    let encontrado = false;
 
-    for (const producto of lista) {
-        if (producto.nombre.toLowerCase() == buscado) {
-            encontrado = true;
-            alert(producto.nombre + " esta en el catalogo, en la posicion " + lista.indexOf(producto));
-        }
-    }
+    const encontrado = lista.find(producto => producto.nombre.toLowerCase() == buscado);
 
-    if (encontrado == false) {
+    if (encontrado) {
+        alert(encontrado.nombre + " esta en el catalogo, vale $" + encontrado.precioM2 + " por m2");
+        console.log(encontrado);
+    } else {
         alert("Ese producto no esta en el catalogo");
     }
+}
+
+// Consulta con some si existe una categoria
+function consultarCategoria(lista) {
+    const categoria = prompt("Que categoria quiere consultar?").toLowerCase();
+
+    const existe = lista.some(producto => producto.categoria.toLowerCase() == categoria);
+
+    if (existe) {
+        alert("Si tenemos productos de la categoria " + categoria);
+    } else {
+        alert("No tenemos productos de esa categoria");
+    }
+
+    console.log("Categoria " + categoria + ": " + existe);
+}
+
+// Filtra los productos segun el presupuesto del cliente
+function filtrarPorPresupuesto(lista) {
+    const presupuesto = pedirNumero("Cual es su presupuesto maximo por m2?");
+
+    const filtrados = lista.filter(producto => producto.precioM2 <= presupuesto);
+
+    if (filtrados.length == 0) {
+        alert("No hay productos dentro de ese presupuesto");
+        return;
+    }
+
+    let mensaje = "Productos hasta $" + presupuesto + " por m2:\n\n";
+
+    filtrados.forEach(producto => {
+        mensaje = mensaje + producto.nombre + " - $" + producto.precioM2 + " por m2\n";
+    });
+
+    alert(mensaje);
+    console.log(filtrados);
+}
+
+// Arma una lista nueva con map aplicando descuento de temporada
+function verPreciosConDescuento(lista) {
+    const porcentaje = pedirNumero("Que descuento de temporada quiere simular?");
+
+    const enOferta = lista.map(producto => {
+        let precioDescuento = producto.precioM2 - (producto.precioM2 * porcentaje / 100);
+        return {
+            nombre: producto.nombre,
+            categoria: producto.categoria,
+            precioM2: precioDescuento
+        };
+    });
+
+    let mensaje = "Precios con " + porcentaje + "% de descuento:\n\n";
+
+    enOferta.forEach(producto => {
+        mensaje = mensaje + producto.nombre + " - $" + producto.precioM2 + " por m2\n";
+    });
+
+    alert(mensaje);
+    console.log(enOferta);
 }
 
 // Aplica un descuento al producto elegido
@@ -219,7 +278,7 @@ function gestionarCatalogo(lista) {
 }
 
 do {
-    opcion = parseInt(prompt("Ingrese una opcion: \n1. Cotizar Toldo \n2. Cotizar Vela \n3. Cotizar Cierre \n4. Ver mi cotizacion \n5. Quitar ultimo producto de mi cotizacion \n6. Ver catalogo \n7. Buscar producto en el catalogo \n8. Gestionar catalogo \n9. Aplicar descuento a un producto \n10. Salir"));
+    opcion = parseInt(prompt("Ingrese una opcion: \n1. Cotizar Toldo \n2. Cotizar Vela \n3. Cotizar Cierre \n4. Ver mi cotizacion \n5. Quitar ultimo producto de mi cotizacion \n6. Ver catalogo \n7. Buscar producto en el catalogo \n8. Consultar por categoria \n9. Buscar productos segun mi presupuesto \n10. Ver precios con descuento de temporada \n11. Gestionar catalogo \n12. Aplicar descuento a un producto \n13. Salir"));
 
     switch (opcion) {
         case 1:
@@ -244,16 +303,25 @@ do {
             buscarProducto(catalogoProductos);
             break;
         case 8:
-            gestionarCatalogo(catalogoProductos);
+            consultarCategoria(catalogoProductos);
             break;
         case 9:
-            descontarProducto(catalogoProductos);
+            filtrarPorPresupuesto(catalogoProductos);
             break;
         case 10:
+            verPreciosConDescuento(catalogoProductos);
+            break;
+        case 11:
+            gestionarCatalogo(catalogoProductos);
+            break;
+        case 12:
+            descontarProducto(catalogoProductos);
+            break;
+        case 13:
             alert("Usted eligio salir");
             break;
         default:
             alert("Opcion no valida");
     }
 
-} while (opcion !== 10);
+} while (opcion !== 13);
